@@ -1,8 +1,27 @@
-<div style="background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video en Vivo</title>
+    <style>
+        #videoContainer {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            height: 100vh; /* Altura por defecto */
+        }
+    </style>
+</head>
+<body>
+<div id="videoContainer">
     <iframe id="videoFrame" width="560" height="315" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
-
 <script>
+    let lastShowVideo = null;
+
     async function loadVideoURL() {
         try {
             const response = await fetch('/envivo.json');
@@ -10,16 +29,31 @@
             const videoFrame = document.getElementById('videoFrame');
             const videoContainer = document.getElementById('videoContainer');
 
-            if (data.showVideo) {
-                videoFrame.src = data.videoURL;
-                videoContainer.style.display = 'flex'; // Mostrar el iframe
-            } else {
-                videoContainer.style.display = 'none'; // Ocultar el iframe
-            }
+            setInterval(() => {
+                fetch('/envivo.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.showVideo !== lastShowVideo) {
+                        if (data.showVideo) {
+                            videoFrame.src = data.videoURL;
+                            videoContainer.style.display = 'flex'; // Mostrar el iframe
+                            videoContainer.style.height = '100vh'; // Ajustar la altura cuando se muestra el video
+                        } else {
+                            videoFrame.src = ''; // Limpiar el src del iframe
+                            videoContainer.style.display = 'none'; // Ocultar el iframe
+                            videoContainer.style.height = '0'; // Ajustar la altura cuando no se muestra el video
+                        }
+                        lastShowVideo = data.showVideo;
+                    }
+                })
+                .catch(error => console.error('Error al cargar el JSON:', error));
+            }, 10000); // El intervalo en milisegundos
         } catch (error) {
-            console.error('Error al cargar el archivo JSON', error);
+            console.error('Error al cargar el JSON:', error);
         }
     }
 
     loadVideoURL();
 </script>
+</body>
+</html>
